@@ -463,8 +463,11 @@ class BenchmarkTool:
         print(f"Reports: {self.reports_dir}")
         print("=" * 60)
 
-        # Validate directories
-        for d in [self.labels_dir, self.outputs_dir, self.reports_dir]:
+        # Auto-create reports folder
+        self.reports_dir.mkdir(parents=True, exist_ok=True)
+
+        # Validate required directories
+        for d in [self.labels_dir, self.outputs_dir]:
             if not d.exists():
                 print(f"\nERROR: Directory not found: {d}")
                 sys.exit(1)
