@@ -203,11 +203,15 @@ class BenchmarkTool:
                     })
 
                 # --- Country numeric ---
-                out_country = out.get("country_of_origin", {})
-                out_num_code = out_country.get("numeric_code")
-                out_alpha2   = out_country.get("alpha2")
+                out_country = out.get("country_of_origin")
+                if out_country is None:
+                    out_num_code = None
+                    out_alpha2 = None
+                else:
+                    out_num_code = out_country.get("numeric_code")
+                    out_alpha2 = out_country.get("alpha2")
 
-                if out_num_code and out_num_code == g_num_code:
+                if out_num_code == g_num_code:
                     feat["country_numeric"] += 1
                 else:
                     item_ok = False
@@ -220,7 +224,7 @@ class BenchmarkTool:
                     })
 
                 # --- Country alpha2 ---
-                if out_alpha2 and out_alpha2 == g_alpha2:
+                if out_alpha2 == g_alpha2:
                     feat["country_alpha2"] += 1
                 else:
                     item_ok = False
