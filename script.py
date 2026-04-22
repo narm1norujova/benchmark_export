@@ -681,11 +681,8 @@ class BenchmarkTool:
             "feature_matching": feature_matching,
             "accuracy": {
                 "overall_accuracy_pct": overall_acc_pct,
-                "item_based_accuracy_pct": item_acc_pct,
-                "perfect_items": perfect_items,
-                "total_items": total_gt_items,
                 "perfect_groups": perfect_groups,
-                "total_groups": total_groups,
+                "perfect_items": perfect_items,
             },
             "mismatches": mismatches,
             "price_value": price_value,
@@ -737,20 +734,21 @@ class BenchmarkTool:
         total_price = round(sum(r.get("price_value", 0.0) for r in results), 6)
         currency = results[0].get("price_currency", "USD") if results else "USD"
 
+        # Clean results - remove extra accuracy fields
         clean_results = []
         for r in results:
             entry = {k: v for k, v in r.items() if k not in ("mismatches", "price_value", "price_currency")}
             entry["mismatch_count"] = len(r["mismatches"])
             entry["price"] = f"{round(r['price_value'], 6)} {r['price_currency']}"
+            # Keep only overall_accuracy_pct in accuracy
+            if "accuracy" in entry:
+                entry["accuracy"] = {
+                    "overall_accuracy_pct": entry["accuracy"]["overall_accuracy_pct"]
+                }
             clean_results.append(entry)
 
-        # Calculate total_accuracy_item (per-item overall accuracy across all files)
+        # Calculate total accuracy
         total_accuracy_item = pct(total_perf_itms, total_gt_items)
-        
-        # Calculate total_accuracy_file (average of per-file overall accuracies across all files)
-        total_accuracy_file = round(
-            sum(r["accuracy"]["overall_accuracy_pct"] for r in results) / len(results), 1
-        ) if results else 0
 
         return {
             "report_type": "BENCHMARK_REPORT",
@@ -763,14 +761,14 @@ class BenchmarkTool:
                 "total_ground_truth_items": total_gt_items,
                 "total_output_items": total_out_items,
                 "total_groups": total_groups,
-                "total_perfect_groups": total_perf_grps,
-                "total_perfect_items": total_perf_itms,
                 "total_gross_export_accuracy": feat_summary["gross_weight_export"]["percentage"],
                 "total_net_export_accuracy": feat_summary["net_weight_export"]["percentage"],
                 "total_gross_packing_accuracy": feat_summary["gross_weight_packing"]["percentage"],
                 "total_net_packing_accuracy": feat_summary["net_weight_packing"]["percentage"],
+                "total_hscode": feat_summary["hs_code"]["percentage"],
+                "total_country_numeric": feat_summary["country_numeric"]["percentage"],
+                "total_country_alpha2": feat_summary["country_alpha2"]["percentage"],
                 "total_accuracy_item": total_accuracy_item,
-                "total_accuracy_file": total_accuracy_file,
                 "total_price": f"{total_price} {currency}",
             },
         }
@@ -902,7 +900,6 @@ class BenchmarkTool:
         print(f"  Total GT items:              {ov['total_ground_truth_items']}")
         print(f"\n  Overall Accuracy:")
         print(f"    Per item:                  {ov['total_accuracy_item']}%")
-        print(f"    Per file:                  {ov['total_accuracy_file']}%")
         print(f"\n  Weight Accuracy (Total):")
         print(f"    Export  Gross:  {ov['total_gross_export_accuracy']}%")
         print(f"    Export  Net:    {ov['total_net_export_accuracy']}%")
